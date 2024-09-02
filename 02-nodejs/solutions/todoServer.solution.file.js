@@ -1,11 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require("fs");
-
+const path = require("path")
+const cors = require('cors')
 const app = express();
-
 app.use(bodyParser.json());
-
+app.use(cors()); // let the request come from anywhere..
 function findIndex(arr, id) {
   for (let i = 0; i < arr.length; i++) {
     if (arr[i].id === id) return i;
@@ -22,11 +22,25 @@ function removeAtIndex(arr, index) {
 }
 
 app.get('/todos', (req, res) => {
-  fs.readFile("todos.json", "utf8", (err, data) => {
-    if (err) throw err;
-    res.json(JSON.parse(data));
+  console.log("Received a GET request for /todos");
+
+  // her
+  fs.readFile(__dirname + "/todos.json", "utf8", (err, data) => {
+    if (err) {
+      console.log("Error reading file:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    try {
+      const todos = JSON.parse(data); // this is responsible for parsing the data from string to javascript object
+      console.log("Todos fetched:", todos);
+      res.json(todos);
+    } catch (parseError) {
+      console.error("Error parsing JSON:", parseError);
+      res.status(400).json({ error: "Error in JSON format" });
+    }
   });
 });
+
 
 app.get('/todos/:id', (req, res) => {
   fs.readFile("todos.json", "utf8", (err, data) => {
@@ -47,11 +61,11 @@ app.post('/todos', (req, res) => {
     title: req.body.title,
     description: req.body.description
   };
-  fs.readFile("todos.json", "utf8", (err, data) => {
+  fs.readFile(__dirname+"/todos.json", "utf8", (err, data) => {
     if (err) throw err;
     const todos = JSON.parse(data);
     todos.push(newTodo);
-    fs.writeFile("todos.json", JSON.stringify(todos), (err) => {
+    fs.writeFile(__dirname+"/todos.json", JSON.stringify(todos), (err) => {
       if (err) throw err;
       res.status(201).json(newTodo);
     });
@@ -98,9 +112,8 @@ app.delete('/todos/:id', (req, res) => {
   });
 });
 
-// for all other routes, return 404
-app.use((req, res, next) => {
-  res.status(404).send();
-});
+app.get("/",(req,res)=>{
+  res.sendFile(path.join("C:/Users/karti/computer science/100xdev/assignment-2/fileServer/index.html"))
+})
 
-module.exports = app;
+app.listen(3000)
